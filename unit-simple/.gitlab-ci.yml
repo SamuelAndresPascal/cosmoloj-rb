@@ -1,0 +1,6 @@
+build:learning:
+  stage: build
+  script:
+    - cd unit-simple
+    - ruby unit-simple.rb
+

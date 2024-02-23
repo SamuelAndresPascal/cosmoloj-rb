@@ -1,0 +1,12 @@
+default:
+  before_script:
+    - ruby --version
+    - pwd
+
+stages:
+  - build
+
+include:
+  - local: 'learning/.gitlab-ci.yml'
+  - local: 'unit-simple/.gitlab-ci.yml'
+

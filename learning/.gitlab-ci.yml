@@ -1,0 +1,6 @@
+build:learning:
+  stage: build
+  script:
+    - cd learning
+    - ruby hello.rb
+
