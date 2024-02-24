@@ -66,10 +66,6 @@ class Unit < Factor
     super(self, 1, 1)
   end
 
-  def dim
-    self
-  end
-
   def get_converter_to(target)
     target.to_base().inverse().concatenate(to_base())
   end
