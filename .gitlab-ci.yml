@@ -5,6 +5,7 @@ default:
 
 stages:
   - build
+  - test
 
 include:
   - local: 'learning/.gitlab-ci.yml'

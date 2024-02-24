@@ -1,6 +1,12 @@
-build:learning:
+build:unit-simple:
   stage: build
   script:
     - cd unit-simple
     - ruby unit-simple.rb
+
+test:unit-simple:
+  stage: test
+  script:
+    - cd unit-simple
+    - ruby test.rb
 

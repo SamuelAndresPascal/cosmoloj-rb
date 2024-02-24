@@ -46,7 +46,7 @@ class UnitConverters
         UnitConverter.new(scale)
     end
 
-    def offset(offset)
+    def self.offset(offset)
         UnitConverter.new(1.0, offset)
     end
 end
