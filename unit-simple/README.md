@@ -1,4 +1,4 @@
-# Simple Unit (implémentation Go)
+# Simple Unit (implémentation Ruby)
 
 
 ## Utilisation
