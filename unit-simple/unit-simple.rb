@@ -1,160 +1,137 @@
 class UnitConverter
 
-    def initialize(scale, offset = 0, inverse = nil)
-        @scale = scale
-        @offset = offset
-        if inverse == nil
-            @inverse = UnitConverter.new(1.0 / @scale, -@offset.to_f / @scale, self)
-        else
-            @inverse = inverse
-        end
-    end
+  attr_reader :scale
+  attr_reader :offset
+  attr_reader :inverse
 
-    def scale
-        @scale
+  def initialize(scale, offset = 0, inverse = nil)
+    @scale = scale
+    @offset = offset
+    if inverse == nil
+      @inverse = UnitConverter.new(1.0 / @scale, -@offset.to_f / @scale, self)
+    else
+      @inverse = inverse
     end
+  end
 
-    def offset
-        @offset
-    end
+  def linear
+    UnitConverters.linear(@scale)
+  end
 
-    def inverse
-        @inverse
-    end
+  def linear_pow(power)
+    UnitConverters.linear(@scale ** power)
+  end
 
-    def linear
-        UnitConverters.linear(@scale)
-    end
+  def convert(value)
+    @scale * value + @offset
+  end
 
-    def linear_pow(power)
-        UnitConverters.linear(@scale ** power)
-    end
-
-    def convert(value)
-        @scale * value + @offset
-    end
-
-    def concatenate(converter)
-        UnitConverter.new(converter.scale() * @scale, convert(converter.offset()))
-    end
+  def concatenate(converter)
+    UnitConverter.new(converter.scale() * @scale, convert(converter.offset()))
+  end
 end
 
 class UnitConverters
-    IDENTITY = UnitConverter.new(1)
+  IDENTITY = UnitConverter.new(1)
 
-    def self.linear(scale)
-        UnitConverter.new(scale)
-    end
+  def self.linear(scale)
+    UnitConverter.new(scale)
+  end
 
-    def self.offset(offset)
-        UnitConverter.new(1.0, offset)
-    end
+  def self.offset(offset)
+    UnitConverter.new(1.0, offset)
+  end
 end
 
 class Factor
 
-    def initialize(dim, numerator, denominator = 1)
-        @dim = dim
-        @numerator = numerator
-        @denominator = denominator
-    end
+  attr_reader :dim
+  attr_reader :numerator
+  attr_reader :denominator
 
-    def dim
-        @dim
-    end
+  def initialize(dim, numerator, denominator = 1)
+    @dim = dim
+    @numerator = numerator
+    @denominator = denominator
+  end
 
-    def numerator
-        @numerator
-    end
-
-    def denominator
-        @denominator
-    end
-
-    def power
-        @numerator.to_f / @denominator
-    end
+  def power
+    @numerator.to_f / @denominator
+  end
 end
 
 class Unit < Factor
 
-    def initialize()
-        super(self, 1, 1)
-    end
+  def initialize()
+    super(self, 1, 1)
+  end
 
-    def get_converter_to(target)
-        target.to_base().inverse().concatenate(self.to_base())
-    end
+  def dim
+    self
+  end
 
-    def to_base
-        raise 'not implemented abstract method to_base()'
-    end
+  def get_converter_to(target)
+    target.to_base().inverse().concatenate(to_base())
+  end
 
-    def shift(value)
-        TransformedUnit.new(UnitConverters.offset(value), self)
-    end
+  def to_base
+    raise 'not implemented abstract method to_base()'
+  end
 
-    def scale_multiply(value)
-        TransformedUnit.new(UnitConverters.linear(value), self)
-    end
+  def shift(value)
+    TransformedUnit.new(UnitConverters.offset(value), self)
+  end
 
-    def scale_divide(value)
-        scale_multiply(1.0 / value)
-    end
+  def scale_multiply(value)
+    TransformedUnit.new(UnitConverters.linear(value), self)
+  end
 
-    def factor
-        Factor.new(self, @numerator, @denominator)
-    end
+  def scale_divide(value)
+    scale_multiply(1.0 / value)
+  end
+
+  def factor(numerator, denominator = 1)
+    Factor.new(self, numerator, denominator)
+  end
 end
 
 class FundamentalUnit < Unit
 
-    def to_base
-        UnitConverters::IDENTITY
-    end
+  def to_base
+    UnitConverters::IDENTITY
+  end
 end
 
 class TransformedUnit < Unit
 
-    def initialize(to_reference, reference)
-        @to_reference = to_reference
-        @reference = reference
-    end
+  attr_reader :to_reference
+  attr_reader :reference
 
-    def to_reference
-        @to_reference
-    end
+  def initialize(to_reference, reference)
+    super()
+    @to_reference = to_reference
+    @reference = reference
+  end
 
-    def reference
-        @reference
-    end
-
-    def to_base
-        reference().to_base().concatenate(to_reference())
-    end
+  def to_base
+    reference().to_base().concatenate(to_reference())
+  end
 end
 
 class DerivedUnit < Unit
 
-    def definition
-    end
+  attr_reader :definition
 
-    def to_base
+  def initialize(*definition)
+    super()
+    @definition = definition
+  end
+
+  def to_base
+    transform = UnitConverters::IDENTITY
+    @definition.each do |factor|
+      transform = factor.dim().to_base().linear_pow(factor.power()).concatenate(transform)
     end
+    transform
+  end
 end
-
-u = UnitConverter.new(2, 5)
-puts u.convert(3)
-v = u.concatenate(u)
-# puts v.convert(3)
-# w = UnitConverter.new(5, 1, u)
-puts u.inverse().convert(11)
-puts u
-puts u.inverse()
-puts u.inverse().inverse()
-
-m = FundamentalUnit.new()
-km = m.scale_multiply(1000)
-cm = m.scale_divide(100)
-cv = km.get_converter_to(cm)
-puts cv.convert(3)
