@@ -9,4 +9,5 @@ test:unit-simple:
   script:
     - cd unit-simple
     - ruby test.rb
+    - ruby testOperator.rb
 

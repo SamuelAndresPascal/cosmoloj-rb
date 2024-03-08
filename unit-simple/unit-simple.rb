@@ -29,6 +29,10 @@ class UnitConverter
   def concatenate(converter)
     UnitConverter.new(converter.scale() * @scale, convert(converter.offset()))
   end
+
+  def ~
+    @inverse
+  end
 end
 
 class UnitConverters
@@ -50,13 +54,27 @@ class Factor
   attr_reader :denominator
 
   def initialize(dim, numerator, denominator = 1)
-    @dim = dim
-    @numerator = numerator
-    @denominator = denominator
+    if (dim.is_a? Unit)
+      @dim = dim
+      @numerator = numerator
+      @denominator = denominator
+    else
+      @dim = dim.dim
+      @numerator = numerator * dim.numerator
+      @denominator = denominator * dim.denominator
+    end
   end
 
   def power
     @numerator.to_f / @denominator
+  end
+
+  def *(value)
+    DerivedUnit.new(this, value)
+  end
+
+  def /(value)
+    DerivedUnit.new(this, Factor.new(value, -1))
   end
 end
 
@@ -88,6 +106,46 @@ class Unit < Factor
 
   def factor(numerator, denominator = 1)
     Factor.new(self, numerator, denominator)
+  end
+
+  def +(value)
+    shift(value)
+  end
+
+  def -(value)
+    shift(-value)
+  end
+
+  def *(value)
+    if value.is_a? Factor
+      DerivedUnit.new(self, value)
+    else
+      scale_multiply(value)
+    end
+  end
+
+  def /(value)
+    if value.is_a? Factor
+      DerivedUnit.new(self, Factor.new(value, -1))
+    else
+      scale_divide(value)
+    end
+  end
+
+  def >>(target)
+    get_converter_to(target)
+  end
+
+  def <<(source)
+    source.get_converter_to(self)
+  end
+
+  def **(value)
+    DerivedUnit.new(Factor.new(self, value))
+  end
+
+  def ~
+    return self ** -1
   end
 end
 

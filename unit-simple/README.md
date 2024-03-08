@@ -1,7 +1,11 @@
 # Simple Unit (implémentation Ruby)
 
+* [Utilisation standard](#Utilisation-standard)
+* [Utilisation avec surcharge des opérateurs](#Utilisation-avec-surcharge-des-opérateurs)
 
-## Utilisation
+## Utilisation standard
+
+L'utilisation standard se réfère aux méthodes implémentant la spécification Simple Unit.
 
 Utilisation des unités transformées :
 
@@ -98,3 +102,102 @@ ms_to_kmh.convert(100.0) # 360.0
 ms_to_kmh.inverse().convert(18.0) # 5.0
 ```
 
+## Utilisation avec surcharge des opérateurs
+
+L'implémentation en Ruby de Simple Unit utilise la surcharge d'opérateurs utilisable dans ce langage comme
+alternative aux méthodes standards.
+
+Utilisation des unités transformées :
+
+```rb
+
+metre = FundamentalUnit.new()
+k_metre = metre * 1000
+c_metre = metre / 100
+cm_to_km = c_metre >> k_metre
+
+cm_to_km.convert(3.0) # 0.00003
+(~cm_to_km).convert(0.00003) # 3.0
+```
+
+Utilisation des unités dérivées :
+
+```rb
+
+metre = FundamentalUnit.new()
+k_metre = metre * 1000
+
+km2 = k_metre ** 2
+c_metre = metre / 100
+cm2 = c_metre ** 2
+km2_to_cm2 = km2 >> cm2
+
+km2_to_cm2.convert(3.0) # 3e10
+(~km2_to_cm2).convert(30000000000.0) # 3.0
+```
+
+Utilisation des unités dérivées en combinant les dimensions :
+
+```rb
+
+metre = FundamentalUnit.new()
+k_gram = FundamentalUnit.new()
+gram = k_gram / 1000
+ton = k_gram * 1000
+g_per_m2 = gram / metre ** 2
+k_metre = metre * 1000
+ton_per_km2 = ton * ~k_metre ** 2
+c_metre = metre / 100
+ton_per_cm2 = ton * ~(c_metre ** 2)
+g_per_m2_to_ton_per_km2 = g_per_m2 >> ton_per_km2
+g_per_m2_to_ton_per_cm2 = ton_per_cm2 << g_per_m2
+
+g_per_m2_to_ton_per_km2.convert(1.0) # 1.0
+(~g_per_m2_to_ton_per_km2).convert(3.0) # 3.0
+g_per_m2_to_ton_per_cm2.convert(1.0) # 1e-10
+g_per_m2_to_ton_per_cm2.convert(3.0) # 3e-10
+g_per_m2_to_ton_per_cm2.offset() # 0.0
+g_per_m2_to_ton_per_cm2.scale() # 1e-10
+(~g_per_m2_to_ton_per_cm2).offset() # -0.0
+(~g_per_m2_to_ton_per_cm2).convert(3e-10), # 3.0
+```
+
+Utilisation des températures (conversions affines et linéaires) :
+
+```rb
+
+kelvin = FundamentalUnit.new()
+celcius = kelvin + 273.15
+k_to_c = kelvin >> celcius
+
+k_to_c.convert(0) # -273.15
+(~k_to_c).convert(0) # 273.15
+
+# en combinaison avec d'autres unites, les conversions d'unites de temperatures doivent devenir lineaires
+metre = FundamentalUnit.new()
+c_per_m = celcius / metre
+k_per_m = kelvin / metre
+k_per_m_to_c_per_m = k_per_m >> c_per_m
+
+k_per_m_to_c_per_m.convert(3.0) # 3.0
+(~k_per_m_to_c_per_m).convert(3.0) # 3.0
+```
+
+Utilisation des conversions non décimales :
+
+```rb
+
+metre = FundamentalUnit.new()
+k_metre = metre * 1000.0
+
+second = FundamentalUnit.new()
+hour = second * 3600.0
+
+metre_per_second = metre / second
+kmh = k_metre / hour
+
+ms_to_kmh = metre_per_second >> kmh
+
+ms_to_kmh.convert(100.0) # 360.0
+(~ms_to_kmh).convert(18.0) # 5.0
+```
